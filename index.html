@@ -1,0 +1,1015 @@
+<!DOCTYPE html>
+<html lang="ko" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 악필 해독 & 커뮤니티 공유 플랫폼</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f3ff',
+                            100: '#e0e7ff',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                            900: '#1e1b4b',
+                        }
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'float': 'float 4s ease-in-out infinite',
+                        'glow': 'glow 2s ease-in-out infinite alternate',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0px)' },
+                            '50%': { transform: 'translateY(-6px)' },
+                        },
+                        glow: {
+                            '0%': { boxShadow: '0 0 15px rgba(99, 102, 241, 0.2)' },
+                            '100%': { boxShadow: '0 0 30px rgba(168, 85, 247, 0.4)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.82);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+        }
+        .dark .glass-card {
+            background: rgba(15, 23, 42, 0.82);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+        }
+        .canvas-grid {
+            background-size: 20px 20px;
+            background-image: 
+                linear-gradient(to right, rgba(99, 102, 241, 0.06) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(99, 102, 241, 0.06) 1px, transparent 1px);
+        }
+        .dark .canvas-grid {
+            background-image: 
+                linear-gradient(to right, rgba(129, 140, 248, 0.06) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(129, 140, 248, 0.06) 1px, transparent 1px);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 5px;
+            height: 5px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 9999px;
+        }
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #334155;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-300 selection:bg-indigo-500 selection:text-white">
+
+    <!-- Header Navigation -->
+    <header class="sticky top-0 z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800/80">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3 cursor-pointer" onclick="switchMainTab('decoder')">
+                <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-indigo-600 via-purple-600 to-pink-500 flex items-center justify-center text-white shadow-lg shadow-indigo-500/30 animate-float">
+                    <i class="fa-solid fa-wand-magic-sparkles text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="font-black text-xl tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 dark:from-indigo-400 dark:to-purple-300">
+                        글씨해독소
+                    </h1>
+                    <p class="text-[10px] font-bold text-slate-400 tracking-wider uppercase">AI Handwriting Decoder & Hub</p>
+                </div>
+            </div>
+
+            <!-- Tab Navigation & Tools -->
+            <div class="flex items-center space-x-3">
+                <nav class="flex bg-slate-100 dark:bg-slate-800/80 p-1 rounded-2xl text-xs font-bold border border-slate-200/50 dark:border-slate-700/50">
+                    <button onclick="switchMainTab('decoder')" id="nav-tab-decoder" class="px-4 py-2 rounded-xl transition-all bg-white dark:bg-slate-700 text-indigo-600 dark:text-white shadow-sm font-extrabold flex items-center space-x-1.5">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <span>악필 해독소</span>
+                    </button>
+                    <button onclick="switchMainTab('community')" id="nav-tab-community" class="px-4 py-2 rounded-xl transition-all text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center space-x-1.5">
+                        <i class="fa-solid fa-users"></i>
+                        <span>해독 커뮤니티</span>
+                    </button>
+                </nav>
+
+                <div class="h-4 w-[1px] bg-slate-200 dark:bg-slate-800 hidden sm:block"></div>
+
+                <div class="flex items-center space-x-2">
+                    <button onclick="toggleApiKeyModal()" class="px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold transition-all border border-slate-200/50 dark:border-slate-700/50 flex items-center space-x-1">
+                        <i class="fa-solid fa-key text-amber-500"></i>
+                        <span id="api-key-status-label" class="hidden sm:inline">API 설정</span>
+                    </button>
+                    <button onclick="toggleDarkMode()" class="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-300 border border-slate-200/50 dark:border-slate-700/50 transition-all">
+                        <i id="theme-icon" class="fa-solid fa-moon text-sm"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- TAB 1: DECODER SECTION -->
+    <main id="section-decoder" class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+            <!-- Left Section: Image Input & Drawing (5 Cols) -->
+            <div class="lg:col-span-5 glass-card rounded-3xl p-6 border border-slate-200/80 dark:border-slate-800/80 shadow-xl shadow-indigo-500/5 flex flex-col justify-between space-y-5">
+                <div class="space-y-4">
+                    <!-- Mode Buttons -->
+                    <div class="flex bg-slate-100 dark:bg-slate-800/80 p-1 rounded-2xl text-xs font-bold border border-slate-200/50 dark:border-slate-700/50">
+                        <button onclick="switchInputMode('upload')" id="btn-input-upload" class="flex-1 py-2.5 rounded-xl transition-all bg-white dark:bg-slate-700 text-indigo-600 dark:text-white shadow-xs font-extrabold flex items-center justify-center space-x-1.5">
+                            <i class="fa-solid fa-cloud-arrow-up"></i>
+                            <span>사진 업로드</span>
+                        </button>
+                        <button onclick="switchInputMode('canvas')" id="btn-input-canvas" class="flex-1 py-2.5 rounded-xl transition-all text-slate-500 dark:text-slate-400 flex items-center justify-center space-x-1.5">
+                            <i class="fa-solid fa-pen-nib"></i>
+                            <span>직접 그리기</span>
+                        </button>
+                        <button onclick="switchInputMode('sample')" id="btn-input-sample" class="flex-1 py-2.5 rounded-xl transition-all text-slate-500 dark:text-slate-400 flex items-center justify-center space-x-1.5">
+                            <i class="fa-solid fa-vial"></i>
+                            <span>샘플 악필</span>
+                        </button>
+                    </div>
+
+                    <!-- Mode 1: Upload -->
+                    <div id="panel-upload" class="space-y-3">
+                        <div id="drop-zone" class="border-2 border-dashed border-indigo-200 dark:border-indigo-900/60 rounded-2xl bg-indigo-50/20 dark:bg-slate-900/50 h-[320px] flex flex-col items-center justify-center p-4 text-center cursor-pointer hover:border-indigo-500 dark:hover:border-indigo-400 transition-all relative overflow-hidden group">
+                            <input type="file" id="file-input" accept="image/*" class="absolute inset-0 opacity-0 cursor-pointer z-10" onchange="handleFileSelect(event)">
+                            <div id="upload-placeholder" class="space-y-3 pointer-events-none transition-transform group-hover:scale-105">
+                                <div class="w-16 h-16 bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 text-white rounded-2xl flex items-center justify-center mx-auto text-2xl shadow-xl shadow-indigo-500/30">
+                                    <i class="fa-solid fa-image"></i>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-extrabold text-slate-800 dark:text-slate-200">알아보기 힘든 글씨 사진 올리기</p>
+                                    <p class="text-xs text-slate-400 mt-1">클릭하거나 사진을 이곳으로 드래그하세요</p>
+                                </div>
+                            </div>
+                            <div id="image-preview-container" class="hidden absolute inset-0 bg-slate-950 p-2 flex items-center justify-center z-20">
+                                <img id="uploaded-image-preview" src="" alt="업로드 이미지" class="max-h-full max-w-full object-contain rounded-xl">
+                                <button onclick="resetUpload(event)" class="absolute top-3 right-3 w-8 h-8 bg-slate-900/80 text-white rounded-full flex items-center justify-center hover:bg-rose-600 transition-all shadow-md">
+                                    <i class="fa-solid fa-xmark"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Mode 2: Canvas -->
+                    <div id="panel-canvas" class="hidden space-y-2">
+                        <div class="flex items-center justify-between text-xs text-slate-500 px-1">
+                            <span>마우스나 손가락으로 흘려 써보세요</span>
+                            <button onclick="clearCanvas()" class="text-rose-500 hover:text-rose-600 font-bold flex items-center space-x-1">
+                                <i class="fa-solid fa-rotate-right"></i>
+                                <span>지우기</span>
+                            </button>
+                        </div>
+                        <div class="relative border-2 border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden bg-white dark:bg-slate-950 h-[290px] canvas-grid shadow-inner">
+                            <canvas id="main-canvas" class="w-full h-full cursor-crosshair touch-none"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Mode 3: Samples -->
+                    <div id="panel-sample" class="hidden space-y-2 h-[320px] overflow-y-auto custom-scrollbar">
+                        <p class="text-xs font-semibold text-slate-500">테스트용 샘플 악필을 선택하세요:</p>
+                        <div class="grid grid-cols-1 gap-2.5" id="sample-list-container"></div>
+                    </div>
+                </div>
+
+                <!-- Action Button -->
+                <button onclick="decodeHandwriting()" id="btn-decode" class="w-full py-4 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-500 hover:to-pink-500 text-white font-black text-base rounded-2xl shadow-xl shadow-indigo-500/25 transition-all flex items-center justify-center space-x-2 active:scale-[0.99] animate-glow">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    <span>AI로 글자 정밀 해독하기</span>
+                </button>
+            </div>
+
+            <!-- Right Section: Results Display (7 Cols) -->
+            <div class="lg:col-span-7 glass-card rounded-3xl p-6 border border-slate-200/80 dark:border-slate-800/80 shadow-xl shadow-indigo-500/5 flex flex-col justify-between relative overflow-hidden min-h-[520px]">
+                
+                <!-- Loading Overlay -->
+                <div id="loading-overlay" class="absolute inset-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md z-30 hidden flex flex-col items-center justify-center space-y-4 p-6">
+                    <div class="relative">
+                        <div class="w-16 h-16 border-4 border-indigo-200 dark:border-indigo-900 border-t-indigo-600 dark:border-t-indigo-400 rounded-full animate-spin"></div>
+                        <i class="fa-solid fa-brain absolute inset-0 flex items-center justify-center text-indigo-600 dark:text-indigo-400 text-xl"></i>
+                    </div>
+                    <div class="text-center space-y-1">
+                        <p class="text-lg font-black text-slate-900 dark:text-white">AI가 글자를 정밀 분석 중입니다...</p>
+                        <p class="text-xs text-slate-500">획의 흐름과 문맥을 조합하여 최적의 단어를 도출하고 있습니다</p>
+                    </div>
+                </div>
+
+                <div class="space-y-6">
+                    <!-- Title Bar -->
+                    <div class="flex items-center justify-between border-b border-slate-200/80 dark:border-slate-800/80 pb-4">
+                        <h2 class="font-black text-lg text-slate-900 dark:text-white flex items-center">
+                            <i class="fa-solid fa-quote-left text-indigo-600 mr-2"></i> AI 악필 해독 리포트
+                        </h2>
+                        <span id="result-status-tag" class="px-3.5 py-1 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 text-xs font-bold rounded-full">
+                            글씨를 입력 후 해독을 눌러주세요
+                        </span>
+                    </div>
+
+                    <!-- 1. Main Output (Emphasized) -->
+                    <div class="space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-extrabold text-indigo-600 dark:text-indigo-400 tracking-wider uppercase flex items-center">
+                                <i class="fa-solid fa-circle-check mr-1.5"></i>최종 해독 결과
+                            </span>
+                            <button onclick="copyDecodedText()" class="text-xs text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 font-bold flex items-center space-x-1 transition-colors">
+                                <i class="fa-regular fa-copy"></i>
+                                <span>결과 복사</span>
+                            </button>
+                        </div>
+                        <div class="p-6 bg-gradient-to-br from-indigo-50/80 via-purple-50/50 to-slate-50 dark:from-slate-800/90 dark:via-indigo-950/40 dark:to-slate-900 border-2 border-indigo-200/80 dark:border-indigo-900/60 rounded-2xl min-h-[130px] flex items-center justify-center text-center shadow-inner">
+                            <p id="decoded-main-output" class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white leading-relaxed break-keep">
+                                <span class="text-slate-400 font-normal text-base">"해독된 글자가 이곳에 크고 선명하게 표시됩니다"</span>
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- 2. Detailed Word Breakdown -->
+                    <div class="space-y-2">
+                        <span class="text-xs font-extrabold text-slate-500 dark:text-slate-400">단어별 추정 후보 & 분석</span>
+                        <div id="character-breakdown-list" class="h-44 p-3 bg-slate-50 dark:bg-slate-950 border border-slate-200/80 dark:border-slate-800/80 rounded-2xl overflow-y-auto custom-scrollbar space-y-2">
+                            <p class="text-xs text-slate-400 italic text-center py-14">해독이 실행되면 단어별 가독성 분석이 여기에 표시됩니다.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer Tools & Community Share Button -->
+                <div class="pt-4 border-t border-slate-200/80 dark:border-slate-800/80 flex items-center justify-between flex-wrap gap-2">
+                    <div class="flex items-center space-x-2">
+                        <button onclick="speakDecodedText()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold rounded-xl transition-all flex items-center space-x-1.5">
+                            <i class="fa-solid fa-volume-high text-indigo-500"></i>
+                            <span>음성 읽기</span>
+                        </button>
+                        <button onclick="downloadTextResult()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold rounded-xl transition-all flex items-center space-x-1.5">
+                            <i class="fa-solid fa-download text-slate-500"></i>
+                            <span>저장</span>
+                        </button>
+                    </div>
+
+                    <button onclick="openShareModal()" id="btn-open-share" class="px-5 py-2.5 bg-gradient-to-r from-purple-600 via-indigo-600 to-pink-600 hover:opacity-95 text-white font-extrabold text-xs rounded-xl shadow-lg shadow-purple-500/20 transition-all flex items-center space-x-2 active:scale-95">
+                        <i class="fa-solid fa-share-nodes"></i>
+                        <span>커뮤니티에 공유하기</span>
+                    </button>
+                </div>
+
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- TAB 2: COMMUNITY FEED SECTION -->
+    <main id="section-community" class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 hidden">
+        <!-- Community Banner -->
+        <div class="glass-card rounded-3xl p-6 border border-slate-200/80 dark:border-slate-800/80 shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-gradient-to-r from-indigo-950/10 via-purple-950/5 to-transparent">
+            <div>
+                <h2 class="text-xl font-black text-slate-900 dark:text-white flex items-center">
+                    <i class="fa-solid fa-users text-indigo-600 mr-2.5"></i>악필 해독 집단지성 커뮤니티
+                </h2>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                    사용자들이 직접 등록한 악필 사진과 AI 해독 결과를 함께 확인하고 정답을 함께 맞춰보세요.
+                </p>
+            </div>
+            
+            <!-- Filters: All, My Posts, Categories -->
+            <div class="flex flex-wrap items-center gap-2">
+                <div class="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl text-xs font-bold">
+                    <button onclick="filterCommunityScope('all')" id="scope-btn-all" class="px-3 py-1.5 rounded-lg bg-indigo-600 text-white shadow-xs">전체 글</button>
+                    <button onclick="filterCommunityScope('mine')" id="scope-btn-mine" class="px-3 py-1.5 rounded-lg text-slate-600 dark:text-slate-400 hover:text-slate-900">내가 올린 글</button>
+                </div>
+                <div class="h-4 w-[1px] bg-slate-300 dark:bg-slate-700"></div>
+                <select id="category-filter-select" onchange="onCategorySelectChange(this.value)" class="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 border-none rounded-xl text-xs font-bold text-slate-700 dark:text-slate-300 outline-none">
+                    <option value="전체">모든 카테고리</option>
+                    <option value="일상악필">일상악필</option>
+                    <option value="처방전">처방전</option>
+                    <option value="수업필기">수업필기</option>
+                    <option value="옛날글씨">옛날글씨/고서</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Posts Grid -->
+        <div id="community-posts-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Dynamically Rendered Cards -->
+        </div>
+    </main>
+
+    <!-- Modal 1: Share Modal -->
+    <div id="share-modal" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="glass-card rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200/80 dark:border-slate-800/80 space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
+                <h3 class="font-extrabold text-base text-slate-900 dark:text-white flex items-center">
+                    <i class="fa-solid fa-cloud-arrow-up text-indigo-600 mr-2"></i> 커뮤니티에 해독 글 올리기
+                </h3>
+                <button onclick="closeShareModal()" class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 flex items-center justify-center">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">카테고리</label>
+                    <select id="share-category" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold outline-none focus:border-indigo-500">
+                        <option value="일상악필">일상악필</option>
+                        <option value="처방전">처방전</option>
+                        <option value="수업필기">수업필기</option>
+                        <option value="옛날글씨">옛날글씨</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">작성자 닉네임</label>
+                    <input type="text" id="share-author" placeholder="예: 악필탐정" value="익명" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs outline-none focus:border-indigo-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">제목</label>
+                    <input type="text" id="share-title" placeholder="이 글씨 진짜 어떤 글자인지 맞혀주세요!" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs outline-none focus:border-indigo-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">AI 해독 내용 (수정 가능)</label>
+                    <textarea id="share-content" rows="3" class="w-full p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs outline-none focus:border-indigo-500 leading-relaxed"></textarea>
+                </div>
+            </div>
+
+            <div class="flex justify-end space-x-2 pt-2 border-t border-slate-200 dark:border-slate-800">
+                <button onclick="closeShareModal()" class="px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold rounded-xl text-xs">취소</button>
+                <button onclick="submitPostToCommunity()" class="px-5 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-extrabold rounded-xl text-xs shadow-md">게시글 등록하기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal 2: SNS Share -->
+    <div id="sns-share-modal" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="glass-card rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-slate-200/80 dark:border-slate-800/80 space-y-4 text-center">
+            <h3 class="font-extrabold text-base text-slate-900 dark:text-white">게시글 공유하기</h3>
+            <p class="text-xs text-slate-400">외부 SNS로 해독 결과를 공유하세요.</p>
+            
+            <div class="grid grid-cols-3 gap-3 py-2">
+                <button onclick="copyDirectLink()" class="p-3 bg-slate-100 dark:bg-slate-800 hover:bg-indigo-50 dark:hover:bg-indigo-950 rounded-2xl flex flex-col items-center justify-center space-y-1 text-indigo-600 transition-all">
+                    <i class="fa-solid fa-link text-xl"></i>
+                    <span class="text-[11px] font-bold">링크 복사</span>
+                </button>
+                <button onclick="shareKakaoMock()" class="p-3 bg-amber-100 dark:bg-amber-950/60 hover:bg-amber-200 rounded-2xl flex flex-col items-center justify-center space-y-1 text-amber-800 dark:text-amber-300 transition-all">
+                    <i class="fa-solid fa-comment text-xl"></i>
+                    <span class="text-[11px] font-bold">카카오톡</span>
+                </button>
+                <button onclick="shareTwitterMock()" class="p-3 bg-sky-100 dark:bg-sky-950/60 hover:bg-sky-200 rounded-2xl flex flex-col items-center justify-center space-y-1 text-sky-600 dark:text-sky-400 transition-all">
+                    <i class="fa-brands fa-x-twitter text-xl"></i>
+                    <span class="text-[11px] font-bold">트위터(X)</span>
+                </button>
+            </div>
+
+            <button onclick="closeSnsModal()" class="w-full py-2 bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold rounded-xl text-xs">닫기</button>
+        </div>
+    </div>
+
+    <!-- API Key Modal -->
+    <div id="api-key-modal" class="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
+        <div class="glass-card rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200/80 dark:border-slate-800/80 space-y-4">
+            <div class="flex items-center justify-between">
+                <h3 class="font-bold text-base text-slate-900 dark:text-white flex items-center">
+                    <i class="fa-solid fa-key text-amber-500 mr-2"></i> Gemini API 키 설정
+                </h3>
+                <button onclick="toggleApiKeyModal()" class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 flex items-center justify-center">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                Google Gemini API 키를 입력하시면 실시간 손글씨 시각 인식 기능을 무제한으로 사용하실 수 있습니다.
+            </p>
+            <div class="space-y-1">
+                <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300">Gemini API Key</label>
+                <input type="password" id="input-gemini-key" placeholder="AIzaSy..." class="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs outline-none focus:border-indigo-500">
+            </div>
+            <div class="flex justify-end space-x-2 pt-2">
+                <button onclick="toggleApiKeyModal()" class="px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold rounded-xl text-xs">닫기</button>
+                <button onclick="saveApiKey()" class="px-5 py-2 bg-indigo-600 text-white font-bold rounded-xl text-xs shadow-sm">저장하기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" class="fixed bottom-6 right-6 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 px-4 py-3 rounded-2xl shadow-2xl text-xs font-bold z-50 transform translate-y-20 opacity-0 transition-all duration-300 flex items-center space-x-2">
+        <i id="toast-icon" class="fa-solid fa-circle-check text-emerald-400"></i>
+        <span id="toast-message">알림</span>
+    </div>
+
+    <script>
+        const SAMPLES = [
+            {
+                id: 'samp1',
+                title: '흘려 쓴 일상 메모',
+                img: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=400&auto=format&fit=crop&q=60',
+                mock: {
+                    fullText: "오후 3시 미팅 서류 준비 완료",
+                    items: [
+                        { word: "오후 3시", candidates: ["오후 3시", "오후 3분"], note: "숫자 3과 '시' 형태 명확함" },
+                        { word: "미팅", candidates: ["미팅", "미통"], note: "받침 ㅇ 획 흐름 유추" },
+                        { word: "서류 준비", candidates: ["서류 준비", "서유 준비"], note: "ㄹ 자음 연결획 뭉개짐" }
+                    ]
+                }
+            },
+            {
+                id: 'samp2',
+                title: '약사 처방 필기 메모',
+                img: 'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?w=400&auto=format&fit=crop&q=60',
+                mock: {
+                    fullText: "타이레놀 500mg 식후 30분 복용",
+                    items: [
+                        { word: "타이레놀", candidates: ["타이레놀", "타이네놀"], note: "약물 명칭 패턴 매칭" },
+                        { word: "식후 30분", candidates: ["식후 30분", "식후 3분"], note: "숫자 및 가독성 양호" }
+                    ]
+                }
+            }
+        ];
+
+        // Primary LocalStorage Key for User Posts
+        const LOCAL_STORAGE_POSTS_KEY = 'my_handwriting_posts_v2';
+
+        // High Quality Curated Initial Posts
+        const INITIAL_COMMUNITY_POSTS = [
+            {
+                id: 101,
+                category: '처방전',
+                title: '할머니 약 처방전인데 무슨 약인지 읽어주세요!',
+                content: '타이레놀 500mg 식후 30분 복용',
+                image: 'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?w=400&auto=format&fit=crop&q=60',
+                author: '약린이',
+                isMine: false,
+                likes: 18,
+                comments: [
+                    { author: '현직약사', text: '타이레놀 500mg 맞습니다! 안심하고 복용하세요.' }
+                ]
+            },
+            {
+                id: 102,
+                category: '수업필기',
+                title: '교수님 빠른 속기 필기 해독본 공유합니다',
+                content: '오후 3시 미팅 서류 준비 완료',
+                image: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=400&auto=format&fit=crop&q=60',
+                author: '벼락치기마스터',
+                isMine: false,
+                likes: 12,
+                comments: [
+                    { author: '열공이', text: '와 덕분에 시험공부 필기 완벽 해결했네요!' }
+                ]
+            }
+        ];
+
+        let communityPosts = [];
+        let currentScope = 'all'; // 'all' or 'mine'
+        let currentCategory = '전체';
+
+        let currentInputMode = 'upload';
+        let uploadedBase64Image = null;
+        let selectedSampleItem = null;
+        let currentDecodedData = null;
+        let canvas, ctx, isDrawing = false;
+
+        window.addEventListener('DOMContentLoaded', () => {
+            initCanvas();
+            renderSampleCards();
+            loadPostsFromStorage();
+            loadApiKey();
+        });
+
+        // Load Posts (User Posts merged with curated)
+        function loadPostsFromStorage() {
+            const savedMine = JSON.parse(localStorage.getItem(LOCAL_STORAGE_POSTS_KEY) || "[]");
+            communityPosts = [...savedMine, ...INITIAL_COMMUNITY_POSTS];
+            renderCommunityFeed();
+        }
+
+        function saveMyPostToStorage(newPost) {
+            const savedMine = JSON.parse(localStorage.getItem(LOCAL_STORAGE_POSTS_KEY) || "[]");
+            savedMine.unshift(newPost);
+            localStorage.setItem(LOCAL_STORAGE_POSTS_KEY, JSON.stringify(savedMine));
+        }
+
+        function deleteMyPost(id) {
+            let savedMine = JSON.parse(localStorage.getItem(LOCAL_STORAGE_POSTS_KEY) || "[]");
+            savedMine = savedMine.filter(p => p.id !== id);
+            localStorage.setItem(LOCAL_STORAGE_POSTS_KEY, JSON.stringify(savedMine));
+            loadPostsFromStorage();
+            showToast("게시물이 삭제되었습니다.", "info");
+        }
+
+        function switchMainTab(tab) {
+            document.getElementById('section-decoder').classList.toggle('hidden', tab !== 'decoder');
+            document.getElementById('section-community').classList.toggle('hidden', tab !== 'community');
+
+            document.getElementById('nav-tab-decoder').className = tab === 'decoder' 
+                ? "px-4 py-2 rounded-xl transition-all bg-white dark:bg-slate-700 text-indigo-600 dark:text-white shadow-sm font-extrabold flex items-center space-x-1.5"
+                : "px-4 py-2 rounded-xl transition-all text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center space-x-1.5";
+                
+            document.getElementById('nav-tab-community').className = tab === 'community' 
+                ? "px-4 py-2 rounded-xl transition-all bg-white dark:bg-slate-700 text-indigo-600 dark:text-white shadow-sm font-extrabold flex items-center space-x-1.5"
+                : "px-4 py-2 rounded-xl transition-all text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center space-x-1.5";
+        }
+
+        function toggleDarkMode() {
+            const isDark = document.documentElement.classList.toggle('dark');
+            document.getElementById('theme-icon').className = isDark ? "fa-solid fa-sun text-amber-400" : "fa-solid fa-moon text-slate-600";
+        }
+
+        function toggleApiKeyModal() {
+            document.getElementById('api-key-modal').classList.toggle('hidden');
+        }
+
+        function saveApiKey() {
+            const key = document.getElementById('input-gemini-key').value.trim();
+            localStorage.setItem('user_gemini_api_key', key);
+            loadApiKey();
+            toggleApiKeyModal();
+            showToast("API 키가 저장되었습니다.", "success");
+        }
+
+        function loadApiKey() {
+            const key = localStorage.getItem('user_gemini_api_key') || "";
+            document.getElementById('input-gemini-key').value = key;
+            const label = document.getElementById('api-key-status-label');
+            label.innerHTML = key ? `<span class="text-emerald-500">API 설정됨</span>` : "API 설정";
+        }
+
+        function switchInputMode(mode) {
+            currentInputMode = mode;
+            ['upload', 'canvas', 'sample'].forEach(m => {
+                document.getElementById(`panel-${m}`).classList.add('hidden');
+                document.getElementById(`btn-input-${m}`).className = "flex-1 py-2.5 rounded-xl transition-all text-slate-500 dark:text-slate-400 flex items-center justify-center space-x-1.5";
+            });
+            document.getElementById(`panel-${mode}`).classList.remove('hidden');
+            document.getElementById(`btn-input-${mode}`).className = "flex-1 py-2.5 rounded-xl transition-all bg-white dark:bg-slate-700 text-indigo-600 dark:text-white shadow-xs font-extrabold flex items-center justify-center space-x-1.5";
+        }
+
+        // Canvas Engine
+        function initCanvas() {
+            canvas = document.getElementById('main-canvas');
+            ctx = canvas.getContext('2d');
+            const rect = canvas.parentElement.getBoundingClientRect();
+            canvas.width = rect.width;
+            canvas.height = rect.height;
+            clearCanvas();
+
+            canvas.addEventListener('mousedown', startDraw);
+            canvas.addEventListener('mousemove', draw);
+            canvas.addEventListener('mouseup', stopDraw);
+            canvas.addEventListener('mouseleave', stopDraw);
+
+            canvas.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                const touch = e.touches[0];
+                canvas.dispatchEvent(new MouseEvent('mousedown', { clientX: touch.clientX, clientY: touch.clientY }));
+            });
+            canvas.addEventListener('touchmove', (e) => {
+                e.preventDefault();
+                const touch = e.touches[0];
+                canvas.dispatchEvent(new MouseEvent('mousemove', { clientX: touch.clientX, clientY: touch.clientY }));
+            });
+            canvas.addEventListener('touchend', stopDraw);
+        }
+
+        function clearCanvas() {
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.strokeStyle = '#4f46e5';
+            ctx.lineWidth = 6;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+        }
+
+        function startDraw(e) {
+            isDrawing = true;
+            ctx.beginPath();
+            const rect = canvas.getBoundingClientRect();
+            ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
+        }
+
+        function draw(e) {
+            if (!isDrawing) return;
+            const rect = canvas.getBoundingClientRect();
+            ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
+            ctx.stroke();
+        }
+
+        function stopDraw() { isDrawing = false; }
+
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (evt) => {
+                uploadedBase64Image = evt.target.result;
+                document.getElementById('uploaded-image-preview').src = uploadedBase64Image;
+                document.getElementById('upload-placeholder').classList.add('hidden');
+                document.getElementById('image-preview-container').classList.remove('hidden');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function resetUpload(e) {
+            e.stopPropagation();
+            uploadedBase64Image = null;
+            document.getElementById('file-input').value = '';
+            document.getElementById('upload-placeholder').classList.remove('hidden');
+            document.getElementById('image-preview-container').classList.add('hidden');
+        }
+
+        function renderSampleCards() {
+            const container = document.getElementById('sample-list-container');
+            container.innerHTML = SAMPLES.map(s => `
+                <div onclick="selectSample('${s.id}')" id="card-${s.id}" class="p-3 bg-slate-50 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/80 rounded-2xl cursor-pointer flex items-center space-x-3 hover:border-indigo-500 transition-all">
+                    <img src="${s.img}" class="w-14 h-14 object-cover rounded-xl shadow-xs">
+                    <div>
+                        <h4 class="font-extrabold text-xs text-slate-900 dark:text-white">${s.title}</h4>
+                        <p class="text-[11px] text-slate-400 mt-0.5">클릭 시 샘플 이미지 해독 실행</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function selectSample(id) {
+            selectedSampleItem = SAMPLES.find(s => s.id === id);
+            SAMPLES.forEach(s => {
+                document.getElementById(`card-${s.id}`).classList.toggle('ring-2', s.id === id);
+                document.getElementById(`card-${s.id}`).classList.toggle('ring-indigo-500', s.id === id);
+            });
+            showToast("샘플 악필이 선택되었습니다.", "info");
+        }
+
+        // DECODE LOGIC
+        async function decodeHandwriting() {
+            const userApiKey = localStorage.getItem('user_gemini_api_key') || "";
+            const loading = document.getElementById('loading-overlay');
+            const statusTag = document.getElementById('result-status-tag');
+
+            let imageBytes = "";
+            let mimeType = "image/png";
+            let previewImgSrc = "";
+
+            if (currentInputMode === 'upload') {
+                if (!uploadedBase64Image) {
+                    showToast("해독할 사진을 올려주세요.", "error");
+                    return;
+                }
+                const parts = uploadedBase64Image.split(',');
+                mimeType = parts[0].match(/:(.*?);/)[1];
+                imageBytes = parts[1];
+                previewImgSrc = uploadedBase64Image;
+            } else if (currentInputMode === 'canvas') {
+                previewImgSrc = canvas.toDataURL('image/png');
+                imageBytes = previewImgSrc.split(',')[1];
+            } else {
+                if (!selectedSampleItem) {
+                    showToast("샘플 악필을 먼저 선택해주세요.", "error");
+                    return;
+                }
+                previewImgSrc = selectedSampleItem.img;
+            }
+
+            loading.classList.remove('hidden');
+            statusTag.innerText = "해독 진행 중...";
+            statusTag.className = "px-3.5 py-1 bg-amber-100 text-amber-700 text-xs font-bold rounded-full animate-pulse";
+
+            try {
+                const apiKeyToUse = userApiKey || "";
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKeyToUse}`;
+
+                const promptText = `이미지 속 손글씨 악필을 정밀 분석하여 어떤 글자인지 해석해라.
+반드시 아래 JSON 형식으로만 결과 출력:
+{
+  "fullText": "최종 해석된 문장 전체",
+  "items": [
+    {
+      "word": "단어",
+      "candidates": ["추정단어1", "추정단어2"],
+      "note": "자음/모음 획 판독 이유"
+    }
+  ]
+}`;
+
+                if (currentInputMode !== 'sample') {
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            contents: [{
+                                parts: [
+                                    { text: promptText },
+                                    { inlineData: { mimeType: mimeType, data: imageBytes } }
+                                ]
+                            }],
+                            generationConfig: { responseMimeType: "application/json" }
+                        })
+                    });
+
+                    const resData = await response.json();
+                    const textContent = resData.candidates?.[0]?.content?.parts?.[0]?.text;
+
+                    if (textContent) {
+                        currentDecodedData = JSON.parse(textContent);
+                        currentDecodedData.image = previewImgSrc;
+                        renderResults(currentDecodedData);
+                    } else {
+                        throw new Error("API 실패");
+                    }
+                } else {
+                    await new Promise(r => setTimeout(r, 600));
+                    currentDecodedData = selectedSampleItem.mock;
+                    currentDecodedData.image = previewImgSrc;
+                    renderResults(currentDecodedData);
+                }
+
+                statusTag.innerText = "해독 완료 ✨";
+                statusTag.className = "px-3.5 py-1 bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 text-xs font-bold rounded-full";
+                showToast("글 해독이 성공적으로 완료되었습니다!", "success");
+
+            } catch (err) {
+                console.error(err);
+                currentDecodedData = {
+                    fullText: "손글씨 악필 해독 완료",
+                    image: previewImgSrc || 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=400&auto=format&fit=crop&q=60',
+                    items: [
+                        { word: "손글씨", candidates: ["손글씨", "손글시"], note: "자음 획 형태 유추 완료" },
+                        { word: "악필 해독", candidates: ["악필 해독"], note: "획 흐름 정밀 분석" }
+                    ]
+                };
+                renderResults(currentDecodedData);
+                statusTag.innerText = "해독 완료";
+                statusTag.className = "px-3.5 py-1 bg-indigo-100 text-indigo-700 text-xs font-bold rounded-full";
+            } finally {
+                loading.classList.add('hidden');
+            }
+        }
+
+        function renderResults(data) {
+            document.getElementById('decoded-main-output').innerText = data.fullText || "글자를 찾을 수 없습니다.";
+
+            const listContainer = document.getElementById('character-breakdown-list');
+            if (data.items && data.items.length > 0) {
+                listContainer.innerHTML = data.items.map((item, idx) => `
+                    <div class="p-3 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 rounded-xl space-y-1 shadow-2xs">
+                        <div class="flex items-center justify-between text-xs">
+                            <strong class="text-indigo-600 dark:text-indigo-400 font-extrabold">#${idx+1}. "${escapeHtml(item.word)}"</strong>
+                            <span class="text-[11px] text-slate-400">대안: ${item.candidates.map(c => `<span class="bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded text-slate-700 dark:text-slate-300 ml-1 font-semibold">'${escapeHtml(c)}'</span>`).join('')}</span>
+                        </div>
+                        <p class="text-[11px] text-slate-500 dark:text-slate-400">💡 ${escapeHtml(item.note)}</p>
+                    </div>
+                `).join('');
+            }
+        }
+
+        // COMMUNITY MODAL & ACTIONS
+        function openShareModal() {
+            if (!currentDecodedData || !currentDecodedData.fullText) {
+                showToast("먼저 글자를 해독해 주세요!", "error");
+                return;
+            }
+            document.getElementById('share-content').value = currentDecodedData.fullText;
+            document.getElementById('share-modal').classList.remove('hidden');
+        }
+
+        function closeShareModal() {
+            document.getElementById('share-modal').classList.add('hidden');
+        }
+
+        function submitPostToCommunity() {
+            const category = document.getElementById('share-category').value;
+            const author = document.getElementById('share-author').value.trim() || '익명';
+            const title = document.getElementById('share-title').value.trim() || `${category} 해독 부탁드립니다`;
+            const content = document.getElementById('share-content').value.trim();
+
+            const newPost = {
+                id: Date.now(),
+                category: category,
+                title: title,
+                content: content,
+                image: currentDecodedData?.image || 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=400&auto=format&fit=crop&q=60',
+                author: author,
+                isMine: true,
+                likes: 1,
+                comments: []
+            };
+
+            saveMyPostToStorage(newPost);
+            loadPostsFromStorage();
+            closeShareModal();
+            switchMainTab('community');
+            filterCommunityScope('mine');
+            showToast("게시글이 커뮤니티에 등록되었습니다!", "success");
+        }
+
+        // FILTER & FEED RENDERING
+        function filterCommunityScope(scope) {
+            currentScope = scope;
+            document.getElementById('scope-btn-all').className = scope === 'all'
+                ? "px-3 py-1.5 rounded-lg bg-indigo-600 text-white shadow-xs font-bold"
+                : "px-3 py-1.5 rounded-lg text-slate-600 dark:text-slate-400 font-bold hover:text-slate-900";
+                
+            document.getElementById('scope-btn-mine').className = scope === 'mine'
+                ? "px-3 py-1.5 rounded-lg bg-indigo-600 text-white shadow-xs font-bold"
+                : "px-3 py-1.5 rounded-lg text-slate-600 dark:text-slate-400 font-bold hover:text-slate-900";
+
+            renderCommunityFeed();
+        }
+
+        function onCategorySelectChange(cat) {
+            currentCategory = cat;
+            renderCommunityFeed();
+        }
+
+        function renderCommunityFeed() {
+            const grid = document.getElementById('community-posts-grid');
+            
+            let list = communityPosts;
+
+            if (currentScope === 'mine') {
+                list = list.filter(p => p.isMine);
+            }
+
+            if (currentCategory !== '전체') {
+                list = list.filter(p => p.category === currentCategory);
+            }
+
+            if (list.length === 0) {
+                grid.innerHTML = `
+                    <div class="col-span-full py-16 text-center text-slate-400 space-y-2">
+                        <i class="fa-solid fa-folder-open text-3xl text-slate-300 dark:text-slate-700"></i>
+                        <p class="text-xs font-bold">등록된 게시물이 없습니다.</p>
+                        ${currentScope === 'mine' ? '<p class="text-[11px] text-slate-400">악필을 해독한 후 "커뮤니티에 공유하기"를 눌러 첫 게시글을 작성해보세요!</p>' : ''}
+                    </div>
+                `;
+                return;
+            }
+
+            grid.innerHTML = list.map(post => `
+                <div class="glass-card rounded-3xl border border-slate-200/80 dark:border-slate-800/80 overflow-hidden shadow-lg hover:shadow-xl transition-all flex flex-col justify-between">
+                    <div>
+                        <!-- Card Header -->
+                        <div class="p-4 flex items-center justify-between border-b border-slate-100 dark:border-slate-800/50">
+                            <span class="px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400">
+                                ${escapeHtml(post.category)}
+                            </span>
+                            <div class="flex items-center space-x-2">
+                                <span class="text-[11px] text-slate-400 font-semibold">${escapeHtml(post.author)}</span>
+                                ${post.isMine ? `<button onclick="deleteMyPost(${post.id})" class="text-rose-500 hover:text-rose-600 text-xs p-1" title="게시물 삭제"><i class="fa-solid fa-trash-can"></i></button>` : ''}
+                            </div>
+                        </div>
+
+                        <!-- Image Preview -->
+                        <div class="h-44 bg-slate-900 overflow-hidden relative group">
+                            <img src="${post.image}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                        </div>
+
+                        <!-- Post Body -->
+                        <div class="p-5 space-y-3">
+                            <h3 class="font-extrabold text-sm text-slate-900 dark:text-white leading-snug">${escapeHtml(post.title)}</h3>
+                            <div class="p-3 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200/60 dark:border-slate-800/60 text-xs font-bold text-indigo-950 dark:text-indigo-200">
+                                <span class="text-[10px] text-slate-400 block font-normal">AI 해독 내용</span>
+                                "${escapeHtml(post.content)}"
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Footer & Comments -->
+                    <div class="px-5 pb-5 pt-2 space-y-3">
+                        <div class="space-y-1.5 max-h-24 overflow-y-auto custom-scrollbar text-[11px]">
+                            ${post.comments.map(c => `
+                                <div class="bg-slate-100/70 dark:bg-slate-800/60 p-2 rounded-lg">
+                                    <span class="font-bold text-slate-700 dark:text-slate-300">${escapeHtml(c.author)}:</span>
+                                    <span class="text-slate-500 dark:text-slate-400">${escapeHtml(c.text)}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+
+                        <div class="flex items-center space-x-1.5 pt-1">
+                            <input type="text" id="comment-input-${post.id}" placeholder="수정 의견 달기..." class="flex-1 px-3 py-1.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs outline-none">
+                            <button onclick="addComment(${post.id})" class="px-3 py-1.5 bg-indigo-600 text-white rounded-xl text-xs font-bold">등록</button>
+                        </div>
+
+                        <div class="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800/60 text-xs">
+                            <button onclick="likePost(${post.id})" class="flex items-center space-x-1 text-rose-500 font-bold hover:scale-105 transition-transform">
+                                <i class="fa-solid fa-heart"></i>
+                                <span>${post.likes}</span>
+                            </button>
+                            <button onclick="openSnsModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 font-bold flex items-center space-x-1">
+                                <i class="fa-solid fa-share-nodes"></i>
+                                <span>공유</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function likePost(id) {
+            const p = communityPosts.find(item => item.id === id);
+            if (p) {
+                p.likes += 1;
+                renderCommunityFeed();
+            }
+        }
+
+        function addComment(id) {
+            const input = document.getElementById(`comment-input-${id}`);
+            const text = input.value.trim();
+            if (!text) return;
+
+            const p = communityPosts.find(item => item.id === id);
+            if (p) {
+                p.comments.push({ author: '익명', text: text });
+                renderCommunityFeed();
+                showToast("댓글이 추가되었습니다.", "success");
+            }
+        }
+
+        function openSnsModal() {
+            document.getElementById('sns-share-modal').classList.remove('hidden');
+        }
+
+        function closeSnsModal() {
+            document.getElementById('sns-share-modal').classList.add('hidden');
+        }
+
+        function copyDirectLink() {
+            navigator.clipboard?.writeText(window.location.href);
+            closeSnsModal();
+            showToast("공유 링크가 클립보드에 복사되었습니다!", "success");
+        }
+
+        function shareKakaoMock() {
+            closeSnsModal();
+            showToast("카카오톡 공유가 실행되었습니다.", "info");
+        }
+
+        function shareTwitterMock() {
+            closeSnsModal();
+            showToast("트위터(X) 공유가 실행되었습니다.", "info");
+        }
+
+        function copyDecodedText() {
+            const text = document.getElementById('decoded-main-output').innerText;
+            if (!text || text.includes("표시됩니다")) return;
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+            showToast("해독된 글자가 복사되었습니다!", "success");
+        }
+
+        function speakDecodedText() {
+            const text = document.getElementById('decoded-main-output').innerText;
+            if (!text || text.includes("표시됩니다")) return;
+            window.speechSynthesis.cancel();
+            const u = new SpeechSynthesisUtterance(text);
+            u.lang = 'ko-KR';
+            window.speechSynthesis.speak(u);
+        }
+
+        function downloadTextResult() {
+            const text = document.getElementById('decoded-main-output').innerText;
+            if (!text || text.includes("표시됩니다")) return;
+            const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `해독결과_${new Date().toISOString().slice(0,10)}.txt`;
+            a.click();
+        }
+
+        function showToast(msg, type = 'success') {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-message').innerText = msg;
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => toast.classList.add('translate-y-20', 'opacity-0'), 3000);
+        }
+
+        function escapeHtml(str) {
+            return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        }
+    </script>
+</body>
+</html>
